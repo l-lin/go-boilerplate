@@ -17,7 +17,7 @@ release: clean get fmt vet test build-all archive
 ## watch: format, test and build project at go files modification
 watch:
 	@echo "  >  Watching go files..."
-	@if type "inotifywait" > /dev/null 2>&1; then while inotifywait -q -e close_write **/*.go -e close_write *.go; do make clean fmt vet test-colorized build; done; else echo 'Please install https://github.com/rvoicilas/inotify-tools/wiki'; fi
+	@if type "ag" > /dev/null 2>&1; then if type "entr" > /dev/null 2>&1; then ag -l | entr make clean fmt vet test-colorized build; else echo "Please install entr: http://eradman.com/entrproject/"; fi else echo "Please install silver searcher: https://github.com/ggreer/the_silver_searcher"; fi
 
 # ---------------------------------------------------------------------------
 

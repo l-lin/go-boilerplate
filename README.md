@@ -5,10 +5,7 @@
 ## Getting started
 
 ```bash
-# Clone project
-git clone https://github.com/l-lin/go-boilerplate <your-project-name>
-# Initialize your go module
-rm go.mod && go mod init github.com/l-lin/your-project-name
+curl -fsSL https://raw.githubusercontent.com/l-lin/go-boilerplate/master/install.sh | sh
 
 # Use make to manage the project
 make help

@@ -21,16 +21,11 @@ fi
 project_name=$(basename "$(pwd)")
 project_module="github.com/l-lin/${project_name}"
 
-read -p "Creating project to $(pwd)? (y/n) " -n 1 -r
-echo
-if [[ $REPLY =~ ^[Yy]$ ]]; then
-    git clone ${url} .
-
-    rm -rf .git go.mod install.sh
-    git init && git remote add origin https://${project_module}
-    go mod init ${project_module}
-    echo "# ${project_name}" > README.md
-fi
+git clone ${url} .
+rm -rf .git go.mod install.sh
+git init && git remote add origin https://${project_module}
+go mod init ${project_module}
+echo "# ${project_name}" > README.md
 
 echo "Project ${project_name} successfully initialized!"
 

@@ -11,7 +11,7 @@ MAKEFLAGS += --silent
 ## compile: compiles project in current system
 compile: clean get fmt vet test build
 
-## release: Generate binaries and an archive containing all binaries in bin/ folder
+## release: generate binaries and an archive containing all binaries in bin/ folder
 release: clean get fmt vet test build-all archive
 
 ## watch: format, test and build project at go files modification

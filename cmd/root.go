@@ -1,7 +1,9 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 
 	homedir "github.com/mitchellh/go-homedir"
@@ -28,7 +30,14 @@ to quickly create a Cobra application.`,
 
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
-func Execute() {
+func Execute(version, buildDate string) {
+	rootCmd.Version = func(version, buildDate string) string {
+		res, err := json.Marshal(cliBuild{Version: version, BuildDate: buildDate})
+		if err != nil {
+			log.Fatal(err)
+		}
+		return string(res)
+	}(version, buildDate)
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -38,6 +47,7 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 
+	rootCmd.SetVersionTemplate(`{{printf "%s" .Version}}`)
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
@@ -72,4 +82,9 @@ func initConfig() {
 	if err := viper.ReadInConfig(); err == nil {
 		fmt.Println("Using config file:", viper.ConfigFileUsed())
 	}
+}
+
+type cliBuild struct {
+	Version   string `json:"version"`
+	BuildDate string `json:"buildDate"`
 }

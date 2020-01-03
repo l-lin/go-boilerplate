@@ -7,6 +7,7 @@ BIN_NAME=${PROJECTNAME}
 
 # Make is verbose in Linux. Make it silent.
 MAKEFLAGS += --silent
+LDFLAGS=-X main.buildDate=`date -u +%Y%m%d-%H%M%S` -X main.version=`scripts/version.sh`
 
 ## compile: compiles project in current system
 compile: clean get fmt vet test build
@@ -31,26 +32,26 @@ clean:
 
 build:
 	@echo "  >  Building binary"
-	@go build -o ${BIN_FOLDER}/${BIN_NAME}
+	@go build -ldflags="${LDFLAGS}" -o ${BIN_FOLDER}/${BIN_NAME}
 
 build-all: build-macos build-windows build-linux build-alpine-scratch
 
 build-macos:
 	@echo "  >  Building binary for MacOS"
-	@GOOS=darwin GOARCH=amd64 go build -o ${BIN_FOLDER}/amd64/darwin/${BIN_NAME}
+	@GOOS=darwin GOARCH=amd64 go build -ldflags="${LDFLAGS}" -o ${BIN_FOLDER}/amd64/darwin/${BIN_NAME}
 
 build-windows:
 	@echo "  >  Building binary for Windows"
-	@GOOS=windows GOARCH=amd64 go build -o ${BIN_FOLDER}/amd64/windows/${BIN_NAME}.exe
+	@GOOS=windows GOARCH=amd64 go build -ldflags="${LDFLAGS}" -o ${BIN_FOLDER}/amd64/windows/${BIN_NAME}.exe
 
 build-linux:
 	@echo "  >  Building binary for Linux"
-	@GOOS=linux GOARCH=amd64 go build -o ${BIN_FOLDER}/amd64/linux/${BIN_NAME}
+	@GOOS=linux GOARCH=amd64 go build -ldflags="${LDFLAGS}" -o ${BIN_FOLDER}/amd64/linux/${BIN_NAME}
 
 # Alpine & scratch base images use musl instead of gnu libc, thus we need to add additional parameters on the build
 build-alpine-scratch:
 	@echo "  >  Building binary for Alpine/Scratch"
-	@CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -installsuffix cgo -o ${BIN_FOLDER}/amd64/scratch/${BIN_NAME}
+	@CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="${LDFLAGS}" -a -installsuffix cgo -o ${BIN_FOLDER}/amd64/scratch/${BIN_NAME}
 
 fmt:
 	@echo "  >  Formatting code"

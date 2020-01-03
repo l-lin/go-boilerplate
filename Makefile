@@ -10,15 +10,15 @@ MAKEFLAGS += --silent
 LDFLAGS=-X main.buildDate=`date -u +%Y%m%d-%H%M%S` -X main.version=`scripts/version.sh`
 
 ## compile: compiles project in current system
-compile: clean get fmt vet test build
+compile: clean get generate fmt vet test build
 
 ## release: generate binaries and an archive containing all binaries in bin/ folder
-release: clean get fmt vet test build-all archive
+release: clean get generate fmt vet test build-all archive
 
 ## watch: format, test and build project at go files modification
 watch:
 	@echo "  >  Watching go files..."
-	@if type "ag" > /dev/null 2>&1; then if type "entr" > /dev/null 2>&1; then ag -l | entr make clean fmt vet test-colorized build; else echo "Please install entr: http://eradman.com/entrproject/"; fi else echo "Please install silver searcher: https://github.com/ggreer/the_silver_searcher"; fi
+	@if type "ag" > /dev/null 2>&1; then if type "entr" > /dev/null 2>&1; then ag -l | entr make clean generate fmt vet test-colorized build; else echo "Please install entr: http://eradman.com/entrproject/"; fi else echo "Please install silver searcher: https://github.com/ggreer/the_silver_searcher"; fi
 
 # ---------------------------------------------------------------------------
 
@@ -56,6 +56,10 @@ build-alpine-scratch:
 fmt:
 	@echo "  >  Formatting code"
 	@go fmt ./...
+
+generate:
+	@echo "  >  Go generate"
+	@if type "stringer" > /dev/null 2>&1; then go generate ./...; else GO111MODULE=off go get golang.org/x/tools/cmd/stringer && go generate ./...; fi
 
 get:
 	@echo "  >  Checking if there is any missing dependencies..."

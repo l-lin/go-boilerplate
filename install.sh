@@ -29,7 +29,8 @@ go mod init ${project_module}
 cat > README.md <<EOF
 # ${project_name}
 
-[![GoDoc](https://godoc.org/l-lin/${project_name}?status.svg)](https://godoc.org/l-lin/${project_name})
+[![GoDoc](https://pkg.go.dev/github.com/l-lin/${project_name}?status.svg)](https://godoc.org/l-lin/${project_name})
+![Go](https://github.com/l-lin/${project_name}/workflows/Go/badge.svg)
 
 > Project's description
 

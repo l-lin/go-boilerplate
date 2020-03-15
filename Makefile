@@ -3,6 +3,10 @@ default: help
 PROJECTNAME=$(shell basename "$(PWD)")
 
 BIN_FOLDER=bin
+BIN_FOLDER_MACOS=${BIN_FOLDER}/amd64/darwin
+BIN_FOLDER_WINDOWS=${BIN_FOLDER}/amd64/windows
+BIN_FOLDER_LINUX=${BIN_FOLDER}/amd64/linux
+BIN_FOLDER_SCRATCH=${BIN_FOLDER}/amd64/scratch
 BIN_NAME=${PROJECTNAME}
 
 # Make is verbose in Linux. Make it silent.
@@ -13,7 +17,7 @@ LDFLAGS=-X main.buildDate=`date -u +%Y%m%d-%H%M%S` -X main.version=`scripts/vers
 compile: clean get generate fmt vet test build
 
 ## release: generate binaries and an archive containing all binaries in bin/ folder
-release: clean get generate fmt vet test build-all archive
+release: clean get generate fmt vet test build-all archive-all
 
 ## watch: format, test and build project at go files modification
 watch:
@@ -22,9 +26,23 @@ watch:
 
 # ---------------------------------------------------------------------------
 
-archive:
-	@echo "  >  Generating archive"
-	@-tar czvf ${BIN_FOLDER}/${BIN_NAME}.tar.gz ${BIN_FOLDER}/amd64
+archive-all: archive-macos archive-windows archive-linux archive-alpine-scratch
+
+archive-macos:
+	@echo "  >  Generating archive for MacOS"
+	@-tar czvf ${BIN_FOLDER}/${BIN_NAME}-amd64-darwin.tar.gz -C ${BIN_FOLDER_MACOS} ${BIN_NAME}
+
+archive-windows:
+	@echo "  >  Generating archive for Windows"
+	@-zip ${BIN_FOLDER}/${BIN_NAME}-amd64-windows.zip -j ${BIN_FOLDER_WINDOWS}/${BIN_NAME}.exe
+
+archive-linux:
+	@echo "  >  Generating archive for Linux"
+	@-tar czvf ${BIN_FOLDER}/${BIN_NAME}-amd64-linux.tar.gz -C ${BIN_FOLDER_LINUX} ${BIN_NAME}
+
+archive-alpine-scratch:
+	@echo "  >  Generating archive for Alpine/Scratch"
+	@-tar czvf ${BIN_FOLDER}/${BIN_NAME}-amd64-scratch.tar.gz -C ${BIN_FOLDER_SCRATCH} ${BIN_NAME}
 
 clean:
 	@echo "  >  Cleaning build cache"
@@ -38,20 +56,20 @@ build-all: build-macos build-windows build-linux build-alpine-scratch
 
 build-macos:
 	@echo "  >  Building binary for MacOS"
-	@GOOS=darwin GOARCH=amd64 go build -ldflags="${LDFLAGS}" -o ${BIN_FOLDER}/amd64/darwin/${BIN_NAME}
+	@GOOS=darwin GOARCH=amd64 go build -ldflags="${LDFLAGS}" -o ${BIN_FOLDER_MACOS}/${BIN_NAME}
 
 build-windows:
 	@echo "  >  Building binary for Windows"
-	@GOOS=windows GOARCH=amd64 go build -ldflags="${LDFLAGS}" -o ${BIN_FOLDER}/amd64/windows/${BIN_NAME}.exe
+	@GOOS=windows GOARCH=amd64 go build -ldflags="${LDFLAGS}" -o ${BIN_FOLDER_WINDOWS}/${BIN_NAME}.exe
 
 build-linux:
 	@echo "  >  Building binary for Linux"
-	@GOOS=linux GOARCH=amd64 go build -ldflags="${LDFLAGS}" -o ${BIN_FOLDER}/amd64/linux/${BIN_NAME}
+	@GOOS=linux GOARCH=amd64 go build -ldflags="${LDFLAGS}" -o ${BIN_FOLDER_LINUX}/${BIN_NAME}
 
 # Alpine & scratch base images use musl instead of gnu libc, thus we need to add additional parameters on the build
 build-alpine-scratch:
 	@echo "  >  Building binary for Alpine/Scratch"
-	@CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="${LDFLAGS}" -a -installsuffix cgo -o ${BIN_FOLDER}/amd64/scratch/${BIN_NAME}
+	@CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="${LDFLAGS}" -a -installsuffix cgo -o ${BIN_FOLDER_SCRATCH}/${BIN_NAME}
 
 fmt:
 	@echo "  >  Formatting code"

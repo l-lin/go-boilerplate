@@ -1,9 +1,11 @@
-FROM golang:1.12 AS builder
+FROM golang:1.14 AS builder
 
 WORKDIR /opt/app
 
-COPY . .
+COPY go.mod go.sum ./
+RUN go mod download
 
+COPY . .
 RUN make get clean build-alpine-scratch
 # --------
 FROM scratch

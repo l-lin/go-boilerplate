@@ -2,7 +2,7 @@
 # Script used to compute the version of the agent by using git tags.
 #
 # If the env variable VERSION is already set, then it will returns its value.
-# Otherwise, it will return the tag version, or the next SNAPSHOT version.
+# Otherwise, it will return the tag version, or the next version.
 
 set -e
 
@@ -20,10 +20,10 @@ if [[ -z ${VERSION} ]]; then
             major=${semver[0]}
             minor=${semver[1]}
             patch=$((semver[2] +1))
-            echo "${major}.${minor}.${patch}-SNAPSHOT"
+            echo "v${major}.${minor}.${patch}-next"
         fi
     else
-      echo "0.0.0-SNAPSHOT"
+      echo "v0.0.0-next"
     fi
 else
     echo "${VERSION}"

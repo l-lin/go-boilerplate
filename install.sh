@@ -24,12 +24,11 @@ project_module="github.com/l-lin/${project_name}"
 git clone ${url} .
 rm -rf .git go.mod go.sum install.sh
 sed -i "s/go-boilerplate/${project_name}/g" main.go cmd/root.go
-git init && git remote add origin https://${project_module}
+git init && git remote add origin gh:l-lin/${project_name}
 go mod init ${project_module}
 cat > README.md <<EOF
 # ${project_name}
 
-[![GoDoc](https://pkg.go.dev/github.com/l-lin/${project_name}?status.svg)](https://godoc.org/l-lin/${project_name})
 ![Go](https://github.com/l-lin/${project_name}/workflows/Go/badge.svg)
 
 > Project's description

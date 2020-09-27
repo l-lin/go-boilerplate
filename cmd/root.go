@@ -3,7 +3,7 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
-	"log"
+	"github.com/rs/zerolog/log"
 	"os"
 
 	homedir "github.com/mitchellh/go-homedir"
@@ -34,7 +34,7 @@ func Execute(version, buildDate string) {
 	rootCmd.Version = func(version, buildDate string) string {
 		res, err := json.Marshal(cliBuild{Version: version, BuildDate: buildDate})
 		if err != nil {
-			log.Fatal(err)
+			log.Fatal().Err(err).Msg("could not marshal version json")
 		}
 		return string(res)
 	}(version, buildDate)
@@ -67,7 +67,7 @@ func initConfig() {
 		// Find home directory.
 		home, err := homedir.Dir()
 		if err != nil {
-			fmt.Println(err)
+			log.Fatal().Err(err).Msg("could not find home directory")
 			os.Exit(1)
 		}
 
@@ -80,7 +80,7 @@ func initConfig() {
 
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
-		fmt.Println("Using config file:", viper.ConfigFileUsed())
+		log.Info().Str("cfgFile", cfgFile).Msg("using config file")
 	}
 }
 

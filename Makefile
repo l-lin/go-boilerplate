@@ -11,13 +11,19 @@ BIN_NAME=${PROJECTNAME}
 
 # Make is verbose in Linux. Make it silent.
 MAKEFLAGS += --silent
-LDFLAGS=-X main.buildDate=`date -u +%Y%m%d-%H%M%S` -X main.version=`scripts/version.sh`
+LDFLAGS=-X main.date=`date -u +%Y-%m-%dT%H:%M:%SZ` -X main.version=`scripts/version.sh` -X main.builtBy=`whoami`
+
+## setup-ci: install all build dependencies for ci
+setup-ci: mod-download
+	mkdir -p ${BIN_FOLDER}
+	curl -sfL https://install.goreleaser.com/github.com/goreleaser/goreleaser.sh | sh
+
+## ci: job for CI to build
+ci: compile
+	@./bin/goreleaser --snapshot --rm-dist
 
 ## compile: compiles project in current system
-compile: clean get generate fmt vet test build
-
-## release: generate binaries and an archive containing all binaries in bin/ folder
-release: clean get generate fmt vet test build-all archive-all
+compile: clean generate fmt vet test build
 
 ## watch: format, test and build project at go files modification
 watch:
@@ -26,27 +32,9 @@ watch:
 
 # ---------------------------------------------------------------------------
 
-archive-all: archive-macos archive-windows archive-linux archive-alpine-scratch
-
-archive-macos:
-	@echo "  >  Generating archive for MacOS"
-	@-tar czvf ${BIN_FOLDER}/${BIN_NAME}-amd64-darwin.tar.gz -C ${BIN_FOLDER_MACOS} ${BIN_NAME}
-
-archive-windows:
-	@echo "  >  Generating archive for Windows"
-	@-zip ${BIN_FOLDER}/${BIN_NAME}-amd64-windows.zip -j ${BIN_FOLDER_WINDOWS}/${BIN_NAME}.exe
-
-archive-linux:
-	@echo "  >  Generating archive for Linux"
-	@-tar czvf ${BIN_FOLDER}/${BIN_NAME}-amd64-linux.tar.gz -C ${BIN_FOLDER_LINUX} ${BIN_NAME}
-
-archive-alpine-scratch:
-	@echo "  >  Generating archive for Alpine/Scratch"
-	@-tar czvf ${BIN_FOLDER}/${BIN_NAME}-amd64-scratch.tar.gz -C ${BIN_FOLDER_SCRATCH} ${BIN_NAME}
-
 clean:
 	@echo "  >  Cleaning build cache"
-	@-rm -rf ${BIN_FOLDER} && go clean
+	@-rm -rf ${BIN_FOLDER}/amd64 ${BIN_FOLDER}/${BIN_NAME} && go clean ./...
 
 build:
 	@echo "  >  Building binary"
@@ -79,9 +67,9 @@ generate:
 	@echo "  >  Go generate"
 	@if type "stringer" > /dev/null 2>&1; then go generate ./...; else GO111MODULE=off go get golang.org/x/tools/cmd/stringer && go generate ./...; fi
 
-get:
-	@echo "  >  Checking if there is any missing dependencies..."
-	@go get
+mod-download:
+	@echo "  >  Download dependencies..."
+	@go mod download
 
 test:
 	@echo "  >  Executing unit tests"

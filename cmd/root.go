@@ -2,89 +2,64 @@ package cmd
 
 import (
 	"encoding/json"
-	"fmt"
+	"github.com/l-lin/go-boilerplate/conf"
 	"github.com/rs/zerolog/log"
-	"os"
-
-	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
+	"github.com/spf13/pflag"
 )
 
-var cfgFile string
-
-// rootCmd represents the base command when called without any subcommands
-var rootCmd = &cobra.Command{
-	Use:   "go-boilerplate",
-	Short: "A brief description of your application",
-	Long: `A longer description that spans multiple lines and likely contains
+// NewRootCmd creates a root command that represents the base command when called without any subcommands
+func NewRootCmd(version, buildDate string) *cobra.Command {
+	rootCmd := &cobra.Command{
+		Use:   "go-boilerplate",
+		Short: "A brief description of your application",
+		Long: `A longer description that spans multiple lines and likely contains
 examples and usage of using your application. For example:
 
 Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
-	// Uncomment the following line if your bare application
-	// has an action associated with it:
-	//	Run: func(cmd *cobra.Command, args []string) { },
+		Run: runRootCmd,
+	}
+	initRootCmd(rootCmd, version, buildDate)
+	return rootCmd
 }
 
-// Execute adds all child commands to the root command and sets flags appropriately.
-// This is called by main.main(). It only needs to happen once to the rootCmd.
-func Execute(version, buildDate string) {
+func initRootCmd(rootCmd *cobra.Command, version, buildDate string) *pflag.FlagSet {
+	//cobra.OnInitialize(initConfig)
 	rootCmd.Version = func(version, buildDate string) string {
-		res, err := json.Marshal(cliBuild{Version: version, BuildDate: buildDate})
+		res, err := json.Marshal(map[string]string{"version": version, "build_date": buildDate})
 		if err != nil {
 			log.Fatal().Err(err).Msg("could not marshal version json")
 		}
 		return string(res)
 	}(version, buildDate)
-	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-}
-
-func init() {
-	cobra.OnInitialize(initConfig)
 
 	rootCmd.SetVersionTemplate(`{{printf "%s" .Version}}`)
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.go-boilerplate.yaml)")
+	rootCmd.PersistentFlags().StringVar(&conf.File, "config", "", "config file (default will look at $PWD/.go-boilerplate.yml then at $HOME/.go-boilerplate.yml)")
+	rootCmd.PersistentFlags().StringSlice("types", []string{"foo", "bar"}, "types")
 
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
+	rootCmd.PersistentFlags().String("name", "foobar", "name")
+
+	// Cobra also supports local flags, which will only run when this action is called directly.
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	return rootCmd.Flags()
 }
 
-// initConfig reads in config file and ENV variables if set.
-func initConfig() {
-	if cfgFile != "" {
-		// Use config file from the flag.
-		viper.SetConfigFile(cfgFile)
-	} else {
-		// Find home directory.
-		home, err := homedir.Dir()
-		if err != nil {
-			log.Fatal().Err(err).Msg("could not find home directory")
-			os.Exit(1)
-		}
-
-		// Search config in home directory with name ".go-boilerplate" (without extension).
-		viper.AddConfigPath(home)
-		viper.SetConfigName(".go-boilerplate")
+func runRootCmd(cmd *cobra.Command, args []string) {
+	log.Info().Msg("Hello, world")
+	log.Info().Str("SomeProperty", conf.Get().SomeProperty).Msg("reading config")
+	types, err := cmd.Flags().GetStringSlice("types")
+	if err != nil {
+		log.Fatal().Err(err).Msg("could not read flag")
 	}
-
-	viper.AutomaticEnv() // read in environment variables that match
-
-	// If a config file is found, read it in.
-	if err := viper.ReadInConfig(); err == nil {
-		log.Info().Str("cfgFile", cfgFile).Msg("using config file")
+	log.Info().Strs("types", types).Msg("reading flag")
+	toggle, err := cmd.Flags().GetBool("toggle")
+	if err != nil {
+		log.Fatal().Err(err).Msg("could not read flag")
 	}
-}
-
-type cliBuild struct {
-	Version   string `json:"version"`
-	BuildDate string `json:"buildDate"`
+	log.Info().Bool("toggle", toggle).Msg("reading flag")
 }

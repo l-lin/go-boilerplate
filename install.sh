@@ -23,7 +23,8 @@ project_module="github.com/l-lin/${project_name}"
 
 git clone ${url} .
 rm -rf .git go.mod go.sum install.sh
-sed -i "s/go-boilerplate/${project_name}/g" main.go cmd/root.go
+sed -i "s/go-boilerplate/${project_name}/g" main.go cmd/root.go conf/conf.go
+mv .go-boilerplate.yml ".${project_name}.yml"
 git init && git remote add origin gh:l-lin/${project_name}
 go mod init ${project_module}
 cat > README.md <<EOF

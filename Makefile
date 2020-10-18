@@ -11,7 +11,7 @@ BIN_NAME=${PROJECTNAME}
 
 # Make is verbose in Linux. Make it silent.
 MAKEFLAGS += --silent
-LDFLAGS=-X main.date=`date -u +%Y-%m-%dT%H:%M:%SZ` -X main.version=`scripts/version.sh` -X main.builtBy=`whoami`
+LDFLAGS=-X main.builDate=`date -u +%Y-%m-%dT%H:%M:%SZ` -X main.version=`scripts/version.sh`
 
 ## setup-ci: install all build dependencies for ci
 setup-ci: mod-download

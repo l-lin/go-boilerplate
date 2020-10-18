@@ -6,7 +6,7 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
-RUN make get clean build-alpine-scratch
+RUN make clean build-alpine-scratch
 # --------
 FROM scratch
 

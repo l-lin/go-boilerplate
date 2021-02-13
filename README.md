@@ -8,7 +8,7 @@
 mkdir -p /path/to/your/project
 cd /path/to/your/project
 
-curl -fsSL https://raw.githubusercontent.com/l-lin/go-boilerplate/master/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/l-lin/go-boilerplate/master/install.sh -H 'Cache-Control: no-cache' | sh
 
 # Use make to manage the project
 make help

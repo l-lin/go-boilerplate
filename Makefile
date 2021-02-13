@@ -11,16 +11,10 @@ BIN_NAME=${PROJECTNAME}
 
 # Make is verbose in Linux. Make it silent.
 MAKEFLAGS += --silent
-LDFLAGS=-X main.builDate=`date -u +%Y-%m-%dT%H:%M:%SZ` -X main.version=`scripts/version.sh`
+LDFLAGS=-X main.buildDate=`date -u +%Y-%m-%dT%H:%M:%SZ` -X main.version=`scripts/version.sh`
 
-## setup-ci: install all build dependencies for ci
-setup-ci: mod-download
-	mkdir -p ${BIN_FOLDER}
-	curl -sfL https://install.goreleaser.com/github.com/goreleaser/goreleaser.sh | sh
-
-## ci: job for CI to build
-ci: compile
-	@./bin/goreleaser --snapshot --rm-dist
+## setup: install all build dependencies for ci
+setup: mod-download
 
 ## compile: compiles project in current system
 compile: clean generate fmt vet test build

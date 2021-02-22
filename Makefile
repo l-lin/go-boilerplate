@@ -63,7 +63,7 @@ generate:
 
 mod-download:
 	@echo "  >  Download dependencies..."
-	@go mod download
+	@go mod download && go mod tidy
 
 test:
 	@echo "  >  Executing unit tests"

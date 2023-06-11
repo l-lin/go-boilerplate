@@ -1,4 +1,4 @@
-package conf
+package config
 
 import (
 	"errors"
@@ -12,7 +12,7 @@ import (
 // creator is used as a builder to create a new Conf by asking the user the needed information
 type creator struct {
 	Err error
-	*Conf
+	*Config
 	stdin  io.ReadCloser
 	stdout io.WriteCloser
 }
@@ -46,8 +46,8 @@ func (creator *creator) askEmail() *creator {
 	return creator
 }
 
-func (creator creator) create() (*Conf, error) {
-	return creator.Conf, creator.Err
+func (creator creator) create() (*Config, error) {
+	return creator.Config, creator.Err
 }
 
 func validateNotEmpty(s string) error {

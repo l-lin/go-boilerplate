@@ -1,20 +1,27 @@
-package cmd
+package main
 
 import (
-	"encoding/json"
-	"github.com/l-lin/go-boilerplate/ioc"
+	"fmt"
+	"go-boilerplate/internal/config"
+
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 )
 
-var container *ioc.Container
+var (
+	configFile       string
+	configRepository config.Repository
+	debug            bool
+)
 
 // NewRootCmd creates a root command that represents the base command when called without any subcommands
-func NewRootCmd(version, buildDate string) *cobra.Command {
+func NewRootCmd(version string) *cobra.Command {
 	c := &cobra.Command{
-		Use:   "go-boilerplate",
+		Use: appName,
+		// TODO: update description
 		Short: "A brief description of your application",
 		Long: `A longer description that spans multiple lines and likely contains
 examples and usage of using your application. For example:
@@ -22,25 +29,25 @@ examples and usage of using your application. For example:
 Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
+		PersistentPreRun: initCli,
 		Run:              runRootCmd,
-		PersistentPreRun: initializeIocContainer,
 	}
-	initRootCmd(c, version, buildDate)
+	initRootCmd(c, version)
 	return c
 }
 
-func initRootCmd(c *cobra.Command, version, buildDate string) *pflag.FlagSet {
-	c.Version = func(version, buildDate string) string {
-		res, err := json.Marshal(map[string]string{"version": version, "build_date": buildDate})
-		if err != nil {
-			log.Fatal().Err(err).Msg("could not marshal version json")
-		}
-		return string(res)
-	}(version, buildDate)
-
+func initRootCmd(c *cobra.Command, version string) *pflag.FlagSet {
+	c.Version = fmt.Sprintf("%s %s\n", appName, version)
 	c.SetVersionTemplate(`{{printf "%s" .Version}}`)
-	c.PersistentFlags().String("config", "", "config file (default will look at $PWD/.go-boilerplate.yml then at $HOME/.go-boilerplate.yml)")
-	c.PersistentFlags().Bool("debug", false, "debug mode")
+
+	c.PersistentFlags().StringVarP(
+		&configFile,
+		"config",
+		"c",
+		"",
+		fmt.Sprintf("config file (default will look at $HOME/.config/%s/config.yml)", appName),
+	)
+	c.PersistentFlags().BoolVarP(&debug, "debug", "d", false, "debug mode")
 
 	// TODO: Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
@@ -54,27 +61,39 @@ func initRootCmd(c *cobra.Command, version, buildDate string) *pflag.FlagSet {
 }
 
 func runRootCmd(c *cobra.Command, _ []string) {
-	log.Info().Msg("Hello, world")
-	log.Info().Str("SomeProperty", container.Conf.SomeProperty).Msg("reading config")
+	// TODO: choose what you want to do at root level
+
+	// display help if no command provided
+	c.Help()
+
+	// or you could perform actions
+	log.Info().Msg("Hello, world from rootCmd")
+
 	types, err := c.Flags().GetStringSlice("types")
 	if err != nil {
 		log.Fatal().Err(err).Msg("could not read flag")
 	}
+
 	log.Info().Strs("types", types).Msg("reading flag")
 	toggle, err := c.Flags().GetBool("toggle")
 	if err != nil {
 		log.Fatal().Err(err).Msg("could not read flag")
 	}
 	log.Info().Bool("toggle", toggle).Msg("reading flag")
+
+	conf, err := configRepository.Get()
+	if err != nil {
+		log.Fatal().Err(err).Msg("could not get the config")
+	}
+	log.Info().Str("SomeProperty", conf.SomeProperty).Msg("reading config.SomeProperty")
 }
 
-func initializeIocContainer(c *cobra.Command, _ []string) {
-	fp := flagParser{Command: c}
-	inputs := ioc.Inputs{
-		Viper:    viper.New(),
-		Debug:    fp.GetDebug(),
-		File:     fp.GetConfigFile(),
-		UserName: fp.GetUserName(),
+func initCli(c *cobra.Command, _ []string) {
+	v := viper.New()
+	if debug {
+		zerolog.SetGlobalLevel(zerolog.DebugLevel)
+		log.Debug().Str("configFile", configFile).Msg("using config file")
+		v.Debug()
 	}
-	container = ioc.Boostrap(inputs)
+	configRepository = config.NewFileRepository(configFile, v)
 }

@@ -2,6 +2,7 @@ default: help
 
 PROJECTNAME=$(shell basename "$(PWD)")
 
+CLI_MAIN_FOLDER=./cmd/cli
 BIN_FOLDER=bin
 BIN_FOLDER_MACOS=${BIN_FOLDER}/amd64/darwin
 BIN_FOLDER_WINDOWS=${BIN_FOLDER}/amd64/windows
@@ -11,7 +12,8 @@ BIN_NAME=${PROJECTNAME}
 
 # Make is verbose in Linux. Make it silent.
 MAKEFLAGS += --silent
-LDFLAGS=-X main.buildDate=`date -u +%Y-%m-%dT%H:%M:%SZ` -X main.version=`scripts/version.sh`
+# LDFLAGS=-X main.buildDate=`date -u +%Y-%m-%dT%H:%M:%SZ` -X main.version=`scripts/version.sh`
+LDFLAGS=
 
 ## setup: install all build dependencies for ci
 setup: mod-download
@@ -22,36 +24,62 @@ compile: clean generate fmt vet test build
 ## watch: format, test and build project at go files modification
 watch:
 	@echo "  >  Watching go files..."
-	@if type "ag" > /dev/null 2>&1; then if type "entr" > /dev/null 2>&1; then ag -l | entr make clean generate fmt vet test-colorized build; else echo "Please install entr: http://eradman.com/entrproject/"; fi else echo "Please install silver searcher: https://github.com/ggreer/the_silver_searcher"; fi
+	@if !type "entr" > /dev/null 2>&1; then \
+		echo "Please install entr: http://eradman.com/entrproject/"; \
+	else \
+		find -type f -name *.go \
+			| entr make clean generate fmt vet test-colorized build; \
+	fi
 
 # ---------------------------------------------------------------------------
 
 clean:
 	@echo "  >  Cleaning build cache"
-	@-rm -rf ${BIN_FOLDER}/amd64 ${BIN_FOLDER}/${BIN_NAME} && go clean ./...
+	@-rm -rf ${BIN_FOLDER}/amd64 ${BIN_FOLDER}/${BIN_NAME} \
+		&& go clean ./...
 
 build:
 	@echo "  >  Building binary"
-	@go build -ldflags="${LDFLAGS}" -o ${BIN_FOLDER}/${BIN_NAME}
+	@go build \
+		-ldflags="${LDFLAGS}" \
+		-o ${BIN_FOLDER}/${BIN_NAME} \
+		"${CLI_MAIN_FOLDER}"
 
 build-all: build-macos build-windows build-linux build-alpine-scratch
 
 build-macos:
 	@echo "  >  Building binary for MacOS"
-	@GOOS=darwin GOARCH=amd64 go build -ldflags="${LDFLAGS}" -o ${BIN_FOLDER_MACOS}/${BIN_NAME}
+	@GOOS=darwin GOARCH=amd64 \
+		go build \
+		-ldflags="${LDFLAGS}" \
+		-o ${BIN_FOLDER_MACOS}/${BIN_NAME} \
+		"${CLI_MAIN_FOLDER}"
 
 build-windows:
 	@echo "  >  Building binary for Windows"
-	@GOOS=windows GOARCH=amd64 go build -ldflags="${LDFLAGS}" -o ${BIN_FOLDER_WINDOWS}/${BIN_NAME}.exe
+	@GOOS=windows GOARCH=amd64 \
+		go build \
+		-ldflags="${LDFLAGS}" \
+		-o ${BIN_FOLDER_WINDOWS}/${BIN_NAME}.exe \
+		"${CLI_MAIN_FOLDER}"
 
 build-linux:
 	@echo "  >  Building binary for Linux"
-	@GOOS=linux GOARCH=amd64 go build -ldflags="${LDFLAGS}" -o ${BIN_FOLDER_LINUX}/${BIN_NAME}
+	@GOOS=linux GOARCH=amd64 \
+		go build \
+		-ldflags="${LDFLAGS}" \
+		-o ${BIN_FOLDER_LINUX}/${BIN_NAME} \
+		"${CLI_MAIN_FOLDER}"
 
 # Alpine & scratch base images use musl instead of gnu libc, thus we need to add additional parameters on the build
 build-alpine-scratch:
 	@echo "  >  Building binary for Alpine/Scratch"
-	@CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="${LDFLAGS}" -a -installsuffix cgo -o ${BIN_FOLDER_SCRATCH}/${BIN_NAME}
+	@CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
+		go build \
+		-ldflags="${LDFLAGS}" \
+		-a -installsuffix cgo \
+		-o ${BIN_FOLDER_SCRATCH}/${BIN_NAME} \
+		"${CLI_MAIN_FOLDER}"
 
 fmt:
 	@echo "  >  Formatting code"
@@ -59,7 +87,10 @@ fmt:
 
 generate:
 	@echo "  >  Go generate"
-	@if type "stringer" > /dev/null 2>&1; then go generate ./...; else GO111MODULE=off go get golang.org/x/tools/cmd/stringer && go generate ./...; fi
+	@if !type "stringer" > /dev/null 2>&1; then \
+		go install golang.org/x/tools/cmd/stringer@latest; \
+	fi
+	@go generate ./...
 
 mod-download:
 	@echo "  >  Download dependencies..."
@@ -71,7 +102,10 @@ test:
 
 test-colorized:
 	@echo "  >  Executing unit tests"
-	@if type "richgo" > /dev/null 2>&1; then richgo test -v -timeout 60s -race ./...; else GO111MODULE=off go get github.com/kyoh86/richgo && richgo test -v -timeout 60s -race ./...; fi
+	@if ! type "richgo" > /dev/null 2>&1; then \
+		go install github.com/kyoh86/richgo@latest; \
+	fi
+	@richgo test -v -timeout 60s -race ./...
 
 vet:
 	@echo "  >  Checking code with vet"

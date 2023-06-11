@@ -1,10 +1,12 @@
 package user
 
 import (
-	"github.com/l-lin/go-boilerplate/conf"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"go-boilerplate/internal/config"
+	"go-boilerplate/pkg/user"
 )
 
 func TestHttpRepository_Get(t *testing.T) {
@@ -14,7 +16,7 @@ func TestHttpRepository_Get(t *testing.T) {
 
 	var tests = map[string]struct {
 		given given
-		test  func(actual *User, err error)
+		test  func(actual *user.User, err error)
 	}{
 		"happy path": {
 			given: given{
@@ -25,7 +27,7 @@ func TestHttpRepository_Get(t *testing.T) {
 					}))
 				},
 			},
-			test: func(actual *User, err error) {
+			test: func(actual *user.User, err error) {
 				if err != nil {
 					t.Errorf("expected no error, got: %v", err)
 					t.Fail()
@@ -40,9 +42,9 @@ func TestHttpRepository_Get(t *testing.T) {
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
 			ts := tt.given.tsFn()
-			repository := NewHttpRepository(conf.Conf{
+			repository := NewHttpRepository(config.Config{
 				URL: ts.URL,
-			}, false)
+			})
 			tt.test(repository.Get("uid"))
 		})
 	}

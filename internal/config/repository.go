@@ -1,8 +1,7 @@
-package conf
+package config
 
 // Repository to persist the app config
 type Repository interface {
-	Init() error
-	Get() *Conf
-	Save(*Conf) error
+	Get() (*Config, error)
+	Save(*Config) error
 }
